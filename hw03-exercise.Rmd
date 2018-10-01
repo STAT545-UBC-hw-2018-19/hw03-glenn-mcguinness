@@ -1,0 +1,72 @@
+---
+title: "STAT 545A - Homework 3: Use dplyr/ggplot2 to manipulate and explore data"
+author: Glenn McGuinness
+output: 
+    html_document:
+        toc: true
+        css: two_columns.css
+---
+
+## Introduction
+
+This assignment is intended to provide a deep dive into manipulating data using dplyr and visualizing the results using ggplot2. It is intended to be a more thorough version of assignment 2, demonstrating a practical knowledge of shaping and displaying data.
+
+```{r import, echo = FALSE}
+library(gapminder)
+library(tidyverse)
+```
+
+## Tasks
+
+This section will explore the different tasks according to the parameters of the assignment. This was described in the [assignment](http://stat545.com/Classroom/assignments/hw03/hw03.html) as follows:
+
+> Pick at least three of the tasks below (in the “Task menu” section) and attack each with a table and figure. For each table, make sure to include a relevant figure! Note that:
+>
+> dplyr should be your data manipulation tool
+> ggplot2 should be your visualization tool
+> Make observations about what your tables/figures show and about the process.
+> 
+> Also useful for you to add to your “cheat sheet” are notes on difficulties/oddities. For example, which figures are easy/hard to make, which data formats make better inputs for plotting functions vs. for human-friendly tables.
+
+Each of the following subsections will tackle one task.
+
+### How is life expectancy changing over time on different continents?
+
+This is an interesting intial question. It is an easy approach to analyze the data and suggest future avenues of exploration. The continents will likely be a proxy for other factors, which can be explored once the initial exploration is complete.
+
+The inline table/plot was done using a css file posted by Jenny Bryan and authored by Omar AlOmeir at this [gist](https://gist.github.com/jennybc/e9e9aba6ba18c72cec26#file-2015-03-02_plot-next-to-table-rmd).
+
+```{r continentLifeExpectancyTable}
+lifeExpByContinent = gapminder %>%
+  group_by(continent, year) %>%
+  summarize(median = median(lifeExp),
+            '25%' = quantile(lifeExp, prob = 0.25),
+            '75%' = quantile(lifeExp, prob = 0.55))
+
+# I learned how to use select to reshape my data from this article:
+# https://datacarpentry.org/R-ecology-lesson/03-dplyr.html#reshaping_with_gather_and_spread
+lifeExpByContinentPretty = lifeExpByContinent %>%
+  select(continent, year, median) %>%
+  spread(key = year, value = median)
+
+lifeExpByContinentTable = lifeExpByContinentPretty %>%
+  knitr::kable(digits = 2)
+
+```
+
+```{r continentLifeExpectancyPlot}
+lifeExpByContinentPlot = lifeExpByContinent %>%
+  ggplot(aes(x = year, group = continent, colour = continent)) +
+  geom_line(aes(y = median)) +
+  geom_errorbar(aes(ymin = `25%`, ymax = `75%`))
+```
+
+<div class="twoC">
+```{r lifeExpectancyGraphics, echo = FALSE}
+# Note that echo is set to false to prevent the code from being put in the same column as the table or plot
+lifeExpByContinentTable
+lifeExpByContinentPlot
+```
+</div>
+<div class="clearer"></div>
+
