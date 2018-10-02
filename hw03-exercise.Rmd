@@ -139,4 +139,52 @@ From these results, it is clear that the relative number of countries below the 
 
 We can also see that African countries are mostly below the world median life expectancy. Asian countries are more evenly distributed on either side of the median. The Americas are mostly, but not entirely, above the median. Finally, Europe and Oceania are almost entirely above the median.
 
+### Find countries with interesting stories
 
+For this section, I will need to find countries with interesting stories. I think that interesting stories tend to have the most volatility, so I will be looking at countries with the greatest amount of volatility in gdp per capita. It is hard to get a sense of the volatility with such low resolution data in the presence of trends. To control the effect of overall regional growth, I will normalize the results by continent.
+
+```{r volatileGdpPerCapita}
+# This is a bit complex, but I first calculate the gdpPerCap by region each year, normalize each country.
+# I then calculate the variance of the gdpPerCap for each country over time, and then filter to get
+# the ten countries with the highest variance of gdpPercap.
+volatileGdpPerCapita = gapminder %>%
+  group_by(year, continent) %>%
+  mutate(regionalMedGPC = median(gdpPercap),
+         normGPC = gdpPercap / regionalMedGPC,) %>%
+  group_by(continent, country) %>%
+  mutate(varNormGPC = var(normGPC)) %>%
+  ungroup() %>%
+  arrange(varNormGPC) %>%
+  top_n(10 * length(unique(gapminder$year)))
+
+
+# I learned how to use select to reshape my data from this article:
+# https://datacarpentry.org/R-ecology-lesson/03-dplyr.html#reshaping_with_gather_and_spread
+volatileGdpPerCapitaPretty = volatileGdpPerCapita %>%
+  select(country, year, gdpPercap) %>%
+  spread(key = year, value = gdpPercap)
+
+volatileGdpPerCapitaTable = volatileGdpPerCapitaPretty %>%
+  knitr::kable(digits = 2)
+```
+
+```{r volatileGdpPerCapitaPlot}
+volatileGdpPerCapitaPlot = volatileGdpPerCapita %>%
+  ggplot(aes(x = year, y = gdpPercap)) +
+  geom_line(aes(group = country, colour = country)) +
+  theme_bw()
+```
+
+<div class="twoC">
+```{r volatileGdpPerCapitaGraphics = 'asis', fig.width=10, echo = FALSE}
+volatileGdpPerCapitaTable
+volatileGdpPerCapitaPlot
+```
+</div>
+<div class="clearer"></div>
+
+There are several interesting stories in this data, especially considering that these are the ten countries with the greatest variance in gdpPerCapita relative to the continent means. The most obvious interesting story is Kuwait, which swings between high GPC's (GDP per capita) until the 1970's before dropping from `r volatileGdpPerCapita %>% filter(year == 1952, country == "Kuwait") %>% select(gdpPercap)` to `r volatileGdpPerCapita %>% filter(year == 1987, country == "Kuwait") %>% select(gdpPercap)`, before beginning to gradually rise. This is likely due to the fact that Kuwait's wealth derives from oil reserves, which depend upon international oil prices. I believe this is especially interesting given that the fall occurred before the Gulf War, in which Kuwait was invaded by Iraq.
+
+There are several countries that had success followed by a decline, such as Libya, Saudi Arabia, and Gabon. The first two of these also have economies that largely depend on oil. The last, Gabon, simply had an unfortunately stagnant economy.
+
+Thankfully, there are many more countries that are success stories. Their variance will have been inflated by the fact that their economies were not volatile, but rather grown much faster than the rest of the region. Some examples of this are Hong Kong, Mauritius, and Taiwan. Though I never intended to include countries with uniform success, I believe that they are still interesting due to their degree of success. It is also nice to see some success amongst the tumult of the other, more volatile, economies.
