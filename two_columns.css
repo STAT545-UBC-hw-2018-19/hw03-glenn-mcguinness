@@ -1,8 +1,0 @@
-/* This code was borrowed from this post: 
- * https://gist.github.com/jennybc/e9e9aba6ba18c72cec26#file-2015-03-02_plot-next-to-table-rmd
- * It was posted by Jenny Bryan, with the original author of Omar AlOmeir
-*/
-.twoC {width: 100%}
-.clearer {clear: both}
-.twoC .table {max-width: 50%; float: right}
-.twoC img {max-width: 50%; float: left}
